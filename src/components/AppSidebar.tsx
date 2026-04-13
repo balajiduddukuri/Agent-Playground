@@ -29,7 +29,10 @@ const items = [
       { title: "Architecture", icon: BrainCircuit, path: "/docs/ARCHITECTURE.md" },
       { title: "API Spec", icon: Terminal, path: "/docs/API.md" },
       { title: "Testing", icon: Shield, path: "/docs/TESTING.md" },
+      { title: "Evaluation", icon: Activity, path: "/docs/EVALUATION.md" },
+      { title: "Security", icon: Shield, path: "/docs/SECURITY.md" },
       { title: "Deployment", icon: Rocket, path: "/docs/DEPLOYMENT.md" },
+      { title: "Troubleshooting", icon: AlertTriangle, path: "/docs/TROUBLESHOOTING.md" },
     ]
   },
   {
@@ -40,6 +43,8 @@ const items = [
       { title: "Skills", icon: ListTodo, path: "/ai/SKILLS.md" },
       { title: "Prompts", icon: Terminal, path: "/ai/PROMPTS.md" },
       { title: "Models", icon: Settings, path: "/ai/MODELS.md" },
+      { title: "Tasks", icon: ListTodo, path: "/ai/TASKS.md" },
+      { title: "Data Sources", icon: FileText, path: "/ai/DATA_SOURCES.md" },
     ]
   },
   {

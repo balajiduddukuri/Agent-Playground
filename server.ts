@@ -69,6 +69,14 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
+    
+    // Serve markdown files and directories from root
+    app.use('/docs', express.static(path.join(process.cwd(), 'docs')));
+    app.use('/ai', express.static(path.join(process.cwd(), 'ai')));
+    app.get('/*.md', (req, res) => {
+      res.sendFile(path.join(process.cwd(), req.path));
+    });
+
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
