@@ -1,11 +1,20 @@
-<div align="center">
+# AI in SDLC Project
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+## Overview
+AI-enabled SDLC using multi-agent architecture.
 
-  <h1>Built with AI Studio</h2>
+## Objectives
+- Improve productivity (30%)
+- Reduce defects (20%)
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+## Scope
+In: Requirement automation, code generation, testing
+Out: Legacy systems
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+## Setup
+Steps to run project
 
-</div>
+## Stakeholders
+- PMO
+- Dev Team
+- QA Team
