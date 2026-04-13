@@ -7,11 +7,55 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Log buffer to store server console output
+const serverLogs: { timestamp: string; level: string; message: string }[] = [];
+const MAX_LOGS = 100;
+
+const originalLog = console.log;
+const originalError = console.error;
+const originalWarn = console.warn;
+
+const captureLog = (level: string, ...args: any[]) => {
+  const message = args.map(arg => 
+    typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+  ).join(' ');
+  
+  serverLogs.push({
+    timestamp: new Date().toISOString(),
+    level,
+    message
+  });
+
+  if (serverLogs.length > MAX_LOGS) {
+    serverLogs.shift();
+  }
+};
+
+console.log = (...args) => {
+  captureLog('info', ...args);
+  originalLog(...args);
+};
+
+console.error = (...args) => {
+  captureLog('error', ...args);
+  originalError(...args);
+};
+
+console.warn = (...args) => {
+  captureLog('warn', ...args);
+  originalWarn(...args);
+};
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
   app.use(express.json());
+
+  // API Route to fetch server logs
+  app.get("/api/server-logs", (req, res) => {
+    res.json(serverLogs);
+  });
 
   // API Route to dump agent outputs to a folder
   app.post("/api/dump", (req, res) => {

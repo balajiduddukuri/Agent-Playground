@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { generateUserStories, generateCode, generateTests } from '@/src/services/gemini';
-import { Loader2, Play, FileText, Code, CheckCircle, Zap, Terminal, Trash2, Sparkles, Eye, Layout } from 'lucide-react';
+import { Loader2, Play, FileText, Code, CheckCircle, Zap, Terminal, Trash2, Sparkles, Eye, Layout, Activity } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useLogs } from '@/src/contexts/LogContext';
@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion, AnimatePresence } from "motion/react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 const ArtifactCard = ({ 
   title, 
@@ -148,7 +149,26 @@ export const AgentPlayground: React.FC = () => {
   const [outputs, setOutputs] = useState<{ BA?: string; Dev?: string; QA?: string }>({});
   const [activeAgent, setActiveAgent] = useState<'BA' | 'Dev' | 'QA'>('BA');
   const [loading, setLoading] = useState(false);
+  const [serverLogs, setServerLogs] = useState<{ timestamp: string; level: string; message: string }[]>([]);
   const { logs, addLog, clearLogs } = useLogs();
+
+  useEffect(() => {
+    const fetchServerLogs = async () => {
+      try {
+        const res = await fetch('/api/server-logs');
+        if (res.ok) {
+          const data = await res.json();
+          setServerLogs(data);
+        }
+      } catch (e) {
+        // Silent fail for polling
+      }
+    };
+    
+    const interval = setInterval(fetchServerLogs, 2000);
+    fetchServerLogs(); // Initial fetch
+    return () => clearInterval(interval);
+  }, []);
 
   const logger = {
     log: (type: any, agent: string, message: string, data?: any) => {
@@ -237,14 +257,18 @@ export const AgentPlayground: React.FC = () => {
   return (
     <div className="space-y-8">
       <Tabs defaultValue="playground" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 h-12 p-1 bg-muted/50 rounded-lg">
+        <TabsList className="grid w-full grid-cols-3 h-12 p-1 bg-muted/50 rounded-lg">
           <TabsTrigger value="playground" className="rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <Sparkles className="w-4 h-4 mr-2 text-amber-500" />
             Playground
           </TabsTrigger>
           <TabsTrigger value="logs" className="rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <Terminal className="w-4 h-4 mr-2 text-blue-500" />
-            Execution Logs
+            Agent Logs
+          </TabsTrigger>
+          <TabsTrigger value="server" className="rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <Layout className="w-4 h-4 mr-2 text-green-500" />
+            Server Runtime
           </TabsTrigger>
         </TabsList>
         
@@ -484,6 +508,45 @@ export const AgentPlayground: React.FC = () => {
                         </details>
                       )}
                     </motion.div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="server" className="mt-8">
+          <Card className="bg-zinc-950 text-zinc-400 font-mono text-xs border-zinc-800 overflow-hidden shadow-2xl">
+            <CardHeader className="flex flex-row items-center justify-between border-b border-zinc-800 py-4 bg-zinc-900/50">
+              <div className="flex items-center gap-3">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/40" />
+                </div>
+                <CardTitle className="text-sm text-zinc-200 font-bold tracking-widest uppercase">NodeJS_Server_Runtime_Stdout</CardTitle>
+              </div>
+              <Badge variant="outline" className="text-[10px] border-zinc-700 text-zinc-500">
+                Live_Polling_Active
+              </Badge>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="max-h-[650px] overflow-auto p-6 space-y-2 custom-scrollbar bg-black/40">
+                {serverLogs.length === 0 ? (
+                  <div className="text-center py-20 opacity-20 flex flex-col items-center gap-4">
+                    <Activity className="w-12 h-12" />
+                    <span className="text-sm tracking-widest uppercase">No_Server_Activity_Detected</span>
+                  </div>
+                ) : (
+                  serverLogs.map((log, i) => (
+                    <div key={i} className="flex gap-4 group hover:bg-white/5 py-1 px-2 rounded transition-colors">
+                      <span className="opacity-30 shrink-0 tabular-nums">{new Date(log.timestamp).toLocaleTimeString()}</span>
+                      <span className={`shrink-0 font-bold uppercase text-[9px] px-1.5 py-0.5 rounded border ${
+                        log.level === 'error' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
+                        log.level === 'warn' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+                        'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                      }`}>
+                        {log.level}
+                      </span>
+                      <span className="text-zinc-300 whitespace-pre-wrap break-all">{log.message}</span>
+                    </div>
                   ))
                 )}
               </div>
