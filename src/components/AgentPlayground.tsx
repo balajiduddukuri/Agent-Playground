@@ -10,6 +10,7 @@ import { useLogs } from '@/src/contexts/LogContext';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion, AnimatePresence } from "motion/react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const ArtifactCard = ({ 
   title, 
@@ -118,8 +119,32 @@ const ArtifactCard = ({
   );
 };
 
+const EXAMPLES = [
+  {
+    id: "task-mgmt",
+    label: "Task Management System",
+    value: "Build a task management system with user authentication, real-time updates, and a dashboard for project metrics."
+  },
+  {
+    id: "ecommerce",
+    label: "E-commerce Platform",
+    value: "Create a modern e-commerce platform with product catalogs, shopping cart, secure checkout, and order tracking."
+  },
+  {
+    id: "fintech",
+    label: "Fintech Dashboard",
+    value: "Develop a financial dashboard that visualizes stock market data, manages user portfolios, and provides AI-driven investment insights."
+  },
+  {
+    id: "healthcare",
+    label: "Healthcare Portal",
+    value: "Build a patient portal for a healthcare provider, allowing users to book appointments, view medical records, and communicate with doctors."
+  }
+];
+
 export const AgentPlayground: React.FC = () => {
   const [input, setInput] = useState('');
+  const [selectedExample, setSelectedExample] = useState<string>("");
   const [outputs, setOutputs] = useState<{ BA?: string; Dev?: string; QA?: string }>({});
   const [activeAgent, setActiveAgent] = useState<'BA' | 'Dev' | 'QA'>('BA');
   const [loading, setLoading] = useState(false);
@@ -187,6 +212,28 @@ export const AgentPlayground: React.FC = () => {
     toast.info("Outputs cleared");
   };
 
+  const handleDump = async () => {
+    if (Object.keys(outputs).length === 0) return;
+    setLoading(true);
+    try {
+      const response = await fetch('/api/dump', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ outputs })
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast.success(`Outputs dumped to ${data.directory}`);
+      } else {
+        toast.error(data.error || "Failed to dump outputs");
+      }
+    } catch (error) {
+      toast.error("Network error while dumping outputs");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <Tabs defaultValue="playground" className="w-full">
@@ -247,15 +294,27 @@ export const AgentPlayground: React.FC = () => {
                 </CardDescription>
               </div>
               {activeAgent === 'BA' && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="bg-background hover:bg-muted"
-                  onClick={() => setInput("Build a task management system with user authentication, real-time updates, and a dashboard for project metrics.")}
-                >
-                  <Sparkles className="w-3 h-3 mr-2 text-amber-500" />
-                  Load Example
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Select 
+                    value={selectedExample} 
+                    onValueChange={(val) => {
+                      setSelectedExample(val);
+                      const example = EXAMPLES.find(e => e.id === val);
+                      if (example) setInput(example.value);
+                    }}
+                  >
+                    <SelectTrigger className="w-[200px] h-9 bg-background">
+                      <SelectValue placeholder="Select Example" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EXAMPLES.map(example => (
+                        <SelectItem key={example.id} value={example.id}>
+                          {example.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               )}
             </CardHeader>
             <CardContent className="p-6 space-y-6">
@@ -302,10 +361,22 @@ export const AgentPlayground: React.FC = () => {
               >
                 <div className="flex items-center justify-between pt-4">
                   <h3 className="text-xl font-bold tracking-tight">Agent Artifacts</h3>
-                  <Button variant="ghost" size="sm" onClick={clearOutputs} className="text-muted-foreground hover:text-destructive hover:bg-destructive/5">
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Clear All
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleDump} 
+                      disabled={loading}
+                      className="text-muted-foreground hover:text-primary hover:bg-primary/5"
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Dump Outputs
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={clearOutputs} className="text-muted-foreground hover:text-destructive hover:bg-destructive/5">
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Clear All
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-6">
